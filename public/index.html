@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>messge</title>
+
+  <link rel="stylesheet" href="css/index_style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.2/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <!-- component template -->
+    <!--table 나오는부분-->
+    <script type="text/x-template" id="grid-template">
+      <table>
+        <thead>
+          <tr><!--테이블 내의 한 행을 정의하는 태그. table row-->
+            <th v-for="key in columns"
+              @click="sortBy(key)"
+              :class="{ active: sortKey == key }">
+              {{ key | capitalize }}
+              <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'">
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="entry in filteredData">
+            <td v-for="key in columns"><!--각 행에 포함된 셀을 만들때 사용되는 태그 table data, td의 개수는 th의 개수와 일치해야함.-->
+               <input v-if="entry[key] == null" type="checkbox" >
+             </input>
+               {{entry[key]}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </script>
+
+    <script type="text/x-template" id="grid-template2">
+      <table>
+        <thead>
+          <tr><!--테이블 내의 한 행을 정의하는 태그. table row-->
+            <th v-for="key in columns"
+              @click="sortBy(key)"
+              :class="{ active: sortKey == key }">
+              {{ key | capitalize }}
+              <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'">
+              </span>
+            </th>
+      </tr>
+        </thead>
+        <tbody>
+          <tr v-for="entry in filteredData">
+            <td v-for="key in columns"><!--각 행에 포함된 셀을 만들때 사용되는 태그 table data, td의 개수는 th의 개수와 일치해야함.-->
+              {{entry[key]}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+</script>
+
+    <!--<script>
+      function searchClick(){
+        alert("search버튼 클릭");
+      }
+    </script>
+-->
+
+
+
+</head>
+
+<body>
+  <div id=app></div>
+  <div id="app1">
+  <h1>{{ message }}</h1>
+  </div>
+
+
+    <!-- demo root element -->
+      <!--text input 나오는부분-->
+    <div id="msgdiv">
+      <br>
+      <form id="Base Language">
+        Base Language &nbsp <input name="baseinput">
+      </form>
+      <br>
+      <form id="Code">
+       Code &nbsp<input name="codeinput" v-model="codeInput" >
+      <button v-on:click="searchClick" type="button" name="searchBtn">Search</button>
+
+      </form>
+      <hr class="hline">
+
+    <form id="msgform" action="index.html" method="post">
+      <h3>Message</h3>
+    </form>
+  <!-- msg grid가 하위 컴포넌트,  Vue.components msg grid 가 상위 컴포넌트-->
+  <!-- v-bind: 문법을 :로 간소화 할수있음-->
+  <!--v-bind : html태그의 기본 속성과 뷰 데이터 속성을 연결-->
+    <msg-grid
+
+      :data="gridData1"
+      :columns="gridColumns1"
+      :filter-key="searchCode"
+      >
+    </msg-grid>
+
+    </div>
+
+   <div id="paramdiv">
+    <form id="paramform" action="index.html" method="post">
+      <h3>Parameter</h3>
+    </form>
+    <parameter-grid
+
+      :data="gridData2"
+      :columns="gridColumns2"
+
+    >
+  </parameter-grid>
+  </div>
+
+
+<script>
+
+//전역 컴포넌트 등록'
+Vue.component('msg-grid', {//msg-grid가 하위컴포넌트
+template: '#grid-template',
+props: {//상위 컴포넌트 -> 하위 컴포넌트로 데이터 전달할때 사용, 여기는 상위컴포넌트
+  data: Array,//
+  columns: Array,
+  filterKey: String
+},
+data: function () {
+  var sortOrders = {}
+  this.columns.forEach(function (key) {
+    sortOrders[key] = 1
+  })
+  return {
+    sortKey: '',
+    sortOrders: sortOrders
+  }
+},
+computed: {//반복적인 연산에 대해서 미리 계산해서 저장해놓고 필요할때 바로 불러오는 캐싱
+  //데이터 연산들을 정의하는 영역
+  filteredData: function () {
+    var sortKey = this.sortKey
+    var filterKey = this.filterKey && this.filterKey.toLowerCase()
+    var order = this.sortOrders[sortKey] || 1
+    var data = this.data
+    if (filterKey) {
+      data = data.filter(function (row) {
+        return Object.keys(row).some(function (key) {
+          return String(row[key]).toLowerCase().indexOf(filterKey) > -1
+        })
+      })
+    }
+    if (sortKey) {
+      data = data.slice().sort(function (a, b) {
+        a = a[sortKey]
+        b = b[sortKey]
+        return (a === b ? 0 : a > b ? 1 : -1) * order
+      })
+    }
+    return data
+  }
+},
+filters: {
+  capitalize: function (str) {
+    return str.charAt(0).toUpperCase() + str.slice(1)
+  }
+},
+methods: {//이벤트 처리
+  sortBy: function (key) {
+    this.sortKey = key
+    this.sortOrders[key] = this.sortOrders[key] * -1
+  }
+}
+})
+
+
+
+Vue.component('parameter-grid', {
+template: '#grid-template2',
+props: {
+  data: Array,
+  columns: Array,
+  filterKey: String
+},
+data: function () {
+  var sortOrders = {}
+  this.columns.forEach(function (key) {
+    sortOrders[key] = 1
+  })
+  return {
+    sortKey: '',
+    sortOrders: sortOrders
+  }
+},
+computed: {//반복적인 연산에 대해서 미리 계산해서 저장해놓고 필요할때 바로 불러오는 캐싱
+  //데이터 연산들을 정의하는 영역
+  filteredData: function () {
+    var sortKey = this.sortKey
+    var filterKey = this.filterKey && this.filterKey.toLowerCase()
+    var order = this.sortOrders[sortKey] || 1
+    var data = this.data
+    if (filterKey) {
+      data = data.filter(function (row) {
+        return Object.keys(row).some(function (key) {
+          return String(row[key]).toLowerCase().indexOf(filterKey) > -1
+        })
+      })
+    }
+    if (sortKey) {
+      data = data.slice().sort(function (a, b) {
+        a = a[sortKey]
+        b = b[sortKey]
+        return (a === b ? 0 : a > b ? 1 : -1) * order
+      })
+    }
+    return data
+  }
+},
+filters: {
+  capitalize: function (str) {
+    return str.charAt(0).toUpperCase() + str.slice(1)
+  }
+},
+methods: {//이벤트 처리
+  sortBy: function (key) {
+    this.sortKey = key
+    this.sortOrders[key] = this.sortOrders[key] * -1
+  }
+}
+})
+
+
+var msg = new Vue({
+el: '#msgdiv',
+data: {
+  searchCode: '',
+  gridColumns1: ['check', 'id', 'name', 'breed', 'age'],
+  gridData1: [],
+  codeInput: ''
+},
+created : function(){
+  console.log('created');
+  axios.get('http://localhost:3000/api/puppies/')
+  .then((result) => {
+    this.gridData1 = result.data.data;
+    // console.log('gridData1 : ' + this.gridData1);
+  })
+},
+methods: {
+  searchClick: function () {//json 결과 렌더링? 하기
+  //  alert("searchClick methodseee");
+      console.log("codeInput : " + this.codeInput);
+      axios.get('http://localhost:3000/api/puppies/' + this.codeInput)
+      .then((result) => {
+        this.gridData1 = result.data;
+      })
+  }
+}
+})
+
+
+var param = new Vue({
+el: '#paramdiv',
+data: {
+  //searchCode: '',
+  gridColumns2: ['Seq', 'Label', 'Language', 'Word'],
+  gridData2: [
+    {Seq: '01', Label: 'LAB-TSK001_035', Language:'En', Word: 'J1'},
+    {Seq: '01', Label: 'LAB-TSK001_035', Language:'Kr', Word: 'J1'}
+  ]
+}
+})
+
+
+</script>
+<script>
+var app = new Vue({
+  el: '#app1',
+  data: {
+    message: 'Metadata Management System'
+  }
+})
+
+</script>
+
+</body>
+</html>
